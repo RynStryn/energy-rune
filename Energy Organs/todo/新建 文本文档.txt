@@ -1,0 +1,163 @@
+#include ws2812b.h
+
+ 引入外部游戏状态，用于显示进度
+extern int game_stage;
+
+ 变量定义 
+int current_r = 150;
+int side_r = 254;
+
+ 缓冲区定义
+uint32_t LED_BYTE_Buffer1[WS28_SENDBUFF_SIZE];  扇叶数据缓冲
+uint16_t LED_BYTE_Buffer2[WS28_SENDBUFF_SIZE];
+ ... 其他缓冲区
+
+int cnt = 0;
+int led_time1 = 0;  用于流水灯计时的变量
+
+ DMA 传输函数 (保持硬件驱动不变)
+void transfer1(void) {  ... 原代码内容 ...  }
+void transfer4(void) {  ... 原代码内容 ...  }
+void transfer5(void) {  ... 原代码内容 ...  }
+
+void transfer(uint8_t leaf)
+{
+    switch(leaf)
+    {
+        case 0 transfer1(); break;
+        case 3 transfer4(); break;
+        case 4 transfer5(); break;
+         需补全 case 1 和 2
+    }
+}
+
+ 单个灯珠设置函数 (保持不变)
+void my_ws2812_1_set(uint16_t leaf, uint16_t num, uint8_t rv, uint8_t gv, uint8_t bv)
+{
+     ... 原代码内容 (位操作填充 Buffer) ...
+     这里为了节省篇幅，假设你已经保留了原有的位填充逻辑
+    uint32_t indexx = ((num - 1)  24);
+     switch (leaf) { ... buffer filling logic ... }
+}
+
+ 全关
+void my_ws2812_set_all_off(uint16_t leaf)
+{
+    for(uint16_t i=1; i=MY_WS2812_MAX_NUM; i++) {
+         my_ws2812_1_set(leaf, i, 0, 0, 0);
+    }
+}
+
+ 全开
+void my_ws2812_set_all_on(uint16_t leaf)
+{
+    for(uint16_t i=1; i=MY_WS2812_MAX_NUM; i++) {
+       my_ws2812_1_set(leaf, i, 222, 0, 0);  默认红光
+    }    
+}
+
+ ============================================================
+  LED_circle 灯臂中轴进度条显示函数 (核心修改)
+ ============================================================
+void LED_circle(uint16_t leaf)
+{
+     如果该扇叶状态是 all_finish (通关)，则灯臂全亮
+    if(LED[leaf].mode == all_finish)
+    {
+        for(int i = CIRCLE6_START + 1; i = MY_WS2812_MAX_NUM; i++)
+        {
+            my_ws2812_1_set(leaf, i, 222, 0, 0);  全红
+        }
+        return;
+    }
+
+     否则，根据 game_stage 显示进度
+     假设灯臂区域是从 CIRCLE6_START + 1 到 MY_WS2812_MAX_NUM
+     你需要确认头文件中这些宏的定义，这里假设它们定义了灯臂的范围
+    
+    int arm_start_index = CIRCLE6_START + 1;
+    int arm_end_index = MY_WS2812_MAX_NUM;
+    int total_arm_leds = arm_end_index - arm_start_index + 1;
+
+     计算应该亮多少颗灯 (05 到 55)
+    int leds_to_light = 0;
+    if (game_stage  0)
+    {
+         比例计算： (当前阶段  5.0)  总灯数
+        leds_to_light = (int)((float)game_stage  5.0f  (float)total_arm_leds);
+    }
+
+     循环设置灯珠
+    for (int i = 0; i  total_arm_leds; i++)
+    {
+        int current_led_index = arm_start_index + i;
+
+        if (i  leds_to_light)
+        {
+             进度范围内的灯 - 亮起 (红色)
+            my_ws2812_1_set(leaf, current_led_index, 222, 0, 0);
+        }
+        else
+        {
+             超出进度的灯 - 熄灭
+            my_ws2812_1_set(leaf, current_led_index, 0, 0, 0);
+        }
+    }
+}
+
+ 靶心图案绘制
+void LED_target(uint16_t leaf)
+{
+     ... 保持原代码的同心圆绘制逻辑 ...
+     为节省篇幅省略，请直接使用你原文件中的逻辑
+}
+
+ 流水灯特效 (保持原样)
+void LED_current(uint16_t leaf)
+{
+    int mode;
+    for(int j=0; j5 ; j++)
+    {
+        for(int i=0; i4 ;i++)
+        {
+            mode = led_time1 - i;
+            while(mode  1) mode += 8;
+             调用底层的 current_mode 绘制
+            LED_current_mode(leaf, mode, 3 - i + j  8);
+            LED_current_mode(leaf, mode, 4 + i + j  8);
+        }
+    }
+}
+
+ 辅助：绘制流水灯的一帧
+void LED_current_mode(uint16_t leaf, int mode, int line)
+{
+     ... 保持原代码 switch(mode) case 1-8 ...
+}
+
+void side_off(uint16_t leaf)
+{
+     ... 保持原代码 ...
+}
+
+void side_on(uint16_t leaf)
+{
+     ... 保持原代码 ...
+}
+
+ 全亮接口 (用于 hit_finish 和 all_finish)
+void LED_current_all_on(uint16_t leaf)
+{
+    for(int i=1; i=MY_WS2812_MAX_NUM; i++)
+    {
+        my_ws2812_1_set(leaf, i, 222, 0, 0);
+    }
+}
+
+ ------------------ 旧的 Energy_RUN 函数 ------------------
+ 注意：由于我们在 control_task 中直接调用了 LED_task - LED_circle
+ 这个旧的 Energy_RUN 可能已经不再被使用了，保留以防万一
+void Energy_RUN(uint16_t leaf)
+{
+     原有的状态机逻辑，如果 control_task 已经接管了调度，这里可以为空或保留原样
+}

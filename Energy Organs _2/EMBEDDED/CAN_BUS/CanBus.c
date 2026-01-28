@@ -17,7 +17,7 @@
 @verbatim
  ===============================================================================
  **/
- 
+ extern int game_stage;
 
 uint16_t turntable_count=0;
 void Can1ReceiveMsgProcess(CanRxMsg * msg)
@@ -95,9 +95,10 @@ void CAN1_r3(uint8_t *pData)
 	{
 	return;
 	}
-
+//you know why?mode = 0,1,2 and no more!原来是懒得改？！
 	LED[1].mode= ((int16_t)pData[1]);
 	LED[2].mode=((int16_t)pData[3]);
 	current_leaf=((int16_t)pData[5]);
+game_stage=((int)pData[6]);
 }
 

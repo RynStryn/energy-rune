@@ -247,7 +247,7 @@ void CAN2_Mode_Init(u8 tbs2,u8 tbs1,u16 brp,u8 mode)
 }
 
 
-void CAN1_Send(int num1,int num2,int num3,int num4,int num5)
+void CAN1_Send(int16_t n1, int16_t n2, int16_t n3, uint8_t n4, uint8_t n5)
 {
 	CanTxMsg TX;
 	
@@ -255,14 +255,14 @@ void CAN1_Send(int num1,int num2,int num3,int num4,int num5)
 	TX.StdId=0x301;
 	TX.IDE=CAN_Id_Standard;
 	TX.RTR=CAN_RTR_Data;
-	TX.Data[0]  =  (uint8_t)((num1)>>8);
-	TX.Data[1]  =  (uint8_t)(num1);
-	TX.Data[2]  =  (uint8_t)((num2)>>8);
-	TX.Data[3]  =  (uint8_t)(num2);
-	TX.Data[4]  =  (uint8_t)((num3)>>8);
-	TX.Data[5]  =  (uint8_t)(num3);
-	TX.Data[6]  =  (uint8_t)(num4);
-	TX.Data[7]  =  (uint8_t)(num5);
+	TX.Data[0]  =  (uint8_t)((n1)>>8);
+	TX.Data[1]  =  (uint8_t)(n1);
+	TX.Data[2]  =  (uint8_t)((n2)>>8);
+	TX.Data[3]  =  (uint8_t)(n2);
+	TX.Data[4]  =  (uint8_t)((n3)>>8);
+	TX.Data[5]  =  (uint8_t)(n3);
+	TX.Data[6]  =  (uint8_t)(n4);
+	TX.Data[7]  =  (uint8_t)(n5);
 	
 	CAN_Transmit(CAN1,&TX);
 	//while((CAN1->TSR&CAN_TSR_TME)==0);

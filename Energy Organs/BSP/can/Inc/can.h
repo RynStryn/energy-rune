@@ -33,7 +33,7 @@ u8 CAN1_Receive_Msg(u8 *buf);							//接收数据
 
 u8 CAN2_Receive_Msg(u8 *buf);
 
-void CAN1_Send(int num1,int num2,int num3,int num4,int num5);
+void CAN1_Send(int16_t n1, int16_t n2, int16_t n3, uint8_t n4, uint8_t n5);
 void CAN1_Configuration(void);
 void set_M3508_info(void);
 void CAN2_Configuration(void);
