@@ -40,45 +40,62 @@ uint8_t flag_all_finish = 0;
 uint8_t finish_flag = 0;
 uint8_t rand_finish = 0;
 
+uint8_t target_mode[6] = {0, 0, 0, 0, 0, 0}; 
 /********************** 函数实现 *********************/
 
 void LED_task(void) {
   // 分时处理不同叶片的显示，减少单次循环负载
   if (time_tick % 50 == 0) {
     m = 1;
-    led_display_set();
+    led_display_set(m);
   }
 
   if (time_tick % 50 == 1) {
     m = 2;
-    led_display_set();
+    led_display_set(m);
   }
 }
 
-void led_display_set() {
+void led_display_set(uint8_t m) {
   switch (LED[m].mode) {
     case Waiting_hit:
-      LED_current(m);  // 流水箭头对应数组填充
-      side_off(m);     // 侧面关
-      LED_target(m);   // 靶子图案
+      my_ws2812_set_all_off(m);
+
+      LED_currentAll(m);  // 流水箭头对应数组填充
+      // side_off(m);        // 侧面关
+      target_mode[m]= 1; 
       break;
     case hit_finish:
-      my_ws2812_set_all_off(m);  // 箭头流水全亮->全灭
-      //..
-      side_off(m);               // 侧面亮
-      LED_circle(m);             // 靶子全亮
+      my_ws2812_set_all_off(m);  // 箭头流水全亮->熄灭
+
+      // side_off(m);
+      //        // 靶子全亮->=none case
+
+      LED_Strip(m);
+      target_mode[m]= 0;
       break;
     case LED_none:
-      my_ws2812_set_all_off(m);  // 全灭
-      //..
+      my_ws2812_set_all_off(m);
+
+      LED_Strip(m);
+      target_mode[m]= 0;
       break;
     case all_finish:
-      LED_current_all_on(m);  // 箭头流水全亮
-      side_off(m);            // 侧面亮
-      LED_circle(m);
+      my_ws2812_set_all_off(m);
+
+      LED_current_all_on(m);  // 箭头流水全亮,改名
+      //    side_off(m);            // 侧面亮
+      //      LED_circle(m);
+      target_mode[m]= 2;
       break;
   }
   transfer(m);
+//  if (time_tick % 50 == 0) {
+//    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+//                        target_mode[2], target_mode[3], target_mode[4],
+//                        target_mode[5]};
+//    USART2_SendArray(tx_buf, 6);  // to 继电器,控制靶面
+//  }
 }
 
 void control_task(void) {

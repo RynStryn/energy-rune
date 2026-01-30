@@ -133,7 +133,7 @@ void key_input(void) {
 
     if (any_active) {
       count_reset++;
-/*      
+      
 if (count_reset >= 2500)  // 2.5s 超时
       {
         game_stage = 0;  // 失败重置进度
@@ -141,7 +141,7 @@ if (count_reset >= 2500)  // 2.5s 超时
           LED[k].mode = LED_none;
         count_reset = 0;
       }
-*/
+
     }
   }
 

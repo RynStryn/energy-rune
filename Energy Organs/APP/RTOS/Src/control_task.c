@@ -18,7 +18,7 @@ int game_stage = 0;           // 当前激活进度 (0-5)
 int bonus_window_timer = 0;   // 1秒连击窗口计时器
 uint8_t flag_first_hit = 0;   // 标记：本轮是否已首击
 uint16_t reset_time_cnt = 0;  // 通关展示计时
-int g1=0;
+int g1 = 0;
 int time_tick = 0;
 int time1 = 0;
 int led_time1 = 1;
@@ -41,29 +41,49 @@ uint8_t flag_all_finish = 0;
 uint8_t finish_flag = 0;
 uint8_t rand_finish = 0;
 uint8_t ready_to_reset = 0;
+
+uint8_t target_mode[5] = {0, 0, 0, 0, 1};  // 靶面控制
+// 0为未击打，1为待击打，2为完成
+//->未激活=已经击打=0,...
 void led_display_set(uint8_t m) {
-  switch (LED[m].mode) 
-{
+  switch (LED[m].mode) {
     case Waiting_hit:
-      LED_current(m);  // 流水箭头对应数组填充
-      side_off(m);     // 侧面关
-      LED_target(m);   // 靶子图案
+      my_ws2812_set_all_off(m);
+
+      LED_currentAll(m);  // 流水箭头对应数组填充
+      // side_off(m);        // 侧面关
+      target_mode[m] = 1;
       break;
     case hit_finish:
       my_ws2812_set_all_off(m);  // 箭头流水全亮->熄灭
-      side_off(m);            // 侧面亮
-      LED_circle(m);          // 靶子全亮
+
+      // side_off(m);
+      //        // 靶子全亮->=none case
+
+      LED_Strip(m);
+      target_mode[m] = 0;
       break;
     case LED_none:
       my_ws2812_set_all_off(m);
+
+      LED_Strip(m);
+      target_mode[m] = 0;
       break;
     case all_finish:
-      LED_current_all_on(m);  // 箭头流水全亮
-      side_off(m);            // 侧面亮
-      LED_circle(m);
+      my_ws2812_set_all_off(m);
+
+      LED_current_all_on(m);  // 箭头流水全亮,改名
+      //    side_off(m);            // 侧面亮
+      //      LED_circle(m);
+      target_mode[m] = 2;
       break;
   }
   transfer(m);
+  if (time_tick % 50 == 0) {
+    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+                        target_mode[2], target_mode[3], target_mode[4]};
+    USART2_SendArray(tx_buf, 6);  // to 继电器,控制靶面
+  }//删掉这个会发送失败
 }
 
 // =========================================
@@ -74,23 +94,74 @@ void LED_task(void) {
     led_display_set(m);
   }
 
-
   if (time_tick % 50 == 20) {
     m = 3;
-led_display_set(m);
-    transfer(m);
+    led_display_set(m);
+		//     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //                     target_mode[2], target_mode[3], target_mode[4]};
+    // USART2_SendArray(tx_buf, 6);
   }
 
   if (time_tick % 50 == 2) {
     m = 4;
-    dsp(mode);
+    led_display_set(m);
+		//     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //                     target_mode[2], target_mode[3], target_mode[4]};
+    // USART2_SendArray(tx_buf, 6);
   }
-}
+  if (time_tick % 50 == 40) {
+    m = 1;
+    switch (LED[m].mode) {
+      case Waiting_hit:
+        target_mode[m] = 1;
+        break;
+      case hit_finish:
+        target_mode[m] = 0;
+        break;
+      case LED_none:
+        target_mode[m] = 0;
+        break;
+      case all_finish:
+        target_mode[m] = 2;
+        break;
+		}
+		// 	    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //                     target_mode[2], target_mode[3], target_mode[4]};
+    // USART2_SendArray(tx_buf, 6);
+    }
+    if (time_tick % 50 == 42) {
+      m = 2;
+      switch (LED[m].mode) {
+        case Waiting_hit:
+          target_mode[m] = 1;
+          break;
+        case hit_finish:
+          target_mode[m] = 0;
+          break;
+        case LED_none:
+          target_mode[m] = 0;
+          break;
+        case all_finish:
+          target_mode[m] = 2;
+          break;
+      }
+		// 	    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //                     target_mode[2], target_mode[3], target_mode[4]};
+    // USART2_SendArray(tx_buf, 6);
+    }
+
+    if (time_tick % 50 == 46) {
+      uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+                          target_mode[2], target_mode[3], target_mode[4],
+                          target_mode[5]};
+      USART2_SendArray(tx_buf, 6);  // to 继电器,控制靶面
+    }
+  }
 
 void control_task(void) {
   time_tick++;
-RC_CtrlData.rc.s2 = 0;
-	flag_start=1;
+  RC_CtrlData.rc.s2 = 0;
+  flag_start = 1;
   // 1. CAN通信：主板向副板发送数据，包含当前 game_stage
   CAN1_Send(LED[1].mode, LED[2].mode, n, game_stage, 0);
 
@@ -111,24 +182,33 @@ RC_CtrlData.rc.s2 = 0;
     // ==================== [新增] 通关判定逻辑 ====================
     if (game_stage >= 5) {
       // 强制所有扇叶进入全亮状态
-      for (int i = 0; i < 5; i++)
+      for (int i = 0; i < 5; i++) {
         LED[i].mode = all_finish;
-
+        target_mode[m] = 2;
+      }
       // 保持5秒展示 (假设 control_task 每 1ms 被调用一次)
       reset_time_cnt++;
-      if (reset_time_cnt > 5000) {
-        game_stage = 0;
-        reset_time_cnt = 0;
-        flag_first_hit = 0;
-        bonus_window_timer = 0;
-        // 全灭重置
-        for (int i = 0; i < 5; i++)
-          LED[i].mode = LED_none;
-      }
 
+      
+            if (reset_time_cnt > 5000) {
+              game_stage = 0;
+              reset_time_cnt = 0;
+              flag_first_hit = 0;
+              bonus_window_timer = 0;
+              // 全灭重置
+              for (int i = 0; i < 5; i++)
+                LED[i].mode = LED_none;
+            }
+      
       // 通关状态下只刷新灯效和检测按键，不再生成新目标
       LED_task();
-      key_input();
+
+      if (time_tick % 35 == 0) {
+        led_time1++;
+        if (led_time1 > 8)
+          led_time1 = 1;
+      }
+      // key_input();
       return;
     }
 
@@ -150,7 +230,7 @@ RC_CtrlData.rc.s2 = 0;
       while (t1 == t2) {
         t2 = rand() % 5;
       }
-g1=t1;
+      g1 = t1;
       LED[t1].mode = Waiting_hit;
       LED[t2].mode = Waiting_hit;
 
@@ -159,39 +239,41 @@ g1=t1;
     }
 
     // ==================== [新增] 连击窗口计时 ====================
-    if (flag_first_hit == 1) {
-      bonus_window_timer++;
-      // 1秒 (1000次tick) 结束后，无论是否击中第二个，都强行结束本轮
-      if (bonus_window_timer >= 1000) {
-        for (int i = 0; i < 5; i++) {
-          if (LED[i].mode == Waiting_hit)
-            LED[i].mode = LED_none;
+    if (1) {
+      if (flag_first_hit == 1) {
+        bonus_window_timer++;
+        // 1秒 (1000次tick) 结束后，无论是否击中第二个，都强行结束本轮
+        if (bonus_window_timer >= 1000) {
+          for (int i = 0; i < 5; i++) {
+            if (LED[i].mode == Waiting_hit)
+              LED[i].mode = LED_none;
+          }
+          flag_first_hit = 0;
+          bonus_window_timer = 0;
         }
-        flag_first_hit = 0;
-        bonus_window_timer = 0;
       }
+
+      if (flag_start == 0) {  // 之前就是这样,怪怪的
+        LED_task();
+      }
+
+      key_input();  // 调用裁判/按键逻辑
+
+      if (time_tick % 35 == 0) {
+        led_time1++;
+        if (led_time1 > 8)
+          led_time1 = 1;
+      }
+
+      // if (time_tick % 50 == 0) {
+      //   uint8_t tx_buf[] = {0x40,        LED[0].mode, LED[1].mode,
+      //                       LED[2].mode, LED[3].mode, LED[4].mode};
+      //   USART2_SendArray(tx_buf, 6);
+      // }
+
+      if (time_tick % 10000000 == 0)
+        time_tick = 0;
     }
-
-    if (flag_start == 0) {
-      LED_task();
-    }
-
-    key_input();  // 调用裁判/按键逻辑
-
-    if (time_tick % 35 == 0) {
-      led_time1++;
-      if (led_time1 > 8)
-        led_time1 = 1;
-    }
-
-    if (time_tick % 50 == 0) {
-      uint8_t tx_buf[] = {0x40,        LED[0].mode, LED[1].mode,
-                          LED[2].mode, LED[3].mode, LED[4].mode};
-      USART2_SendArray(tx_buf, 6);
-    }
-
-    if (time_tick % 10000000 == 0)
-      time_tick = 0;
   }
 }
 

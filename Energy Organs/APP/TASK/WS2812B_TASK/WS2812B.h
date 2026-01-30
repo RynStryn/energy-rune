@@ -13,7 +13,7 @@
 //#define MY_WS2812_MAX_NUM  64+184+111
 //#define SIDE_START 64
 //#define CIRCLE_START 64+184
-#define WS28_SENDBUFF_SIZE	        MY_WS2812_MAX_NUM*24
+#define WS28_SENDBUFF_SIZE	        (MY_WS2812_MAX_NUM*24)
 #define CIRCLE6_START CIRCLE_START
 #define CIRCLE5_START (CIRCLE_START+40)
 #define CIRCLE4_START (CIRCLE_START+40+30)
@@ -127,6 +127,9 @@ void LED_current_all_on(uint16_t leaf);
 void LED_current_all_off(uint16_t leaf);
 void LED_circle(uint16_t leaf);
 void LED_target(uint16_t leaf);
+void LED_target_allOff(uint16_t leaf);
+void LED_currentAll(uint16_t leaf) ;
+void LED_Strip(uint16_t leaf) ;
 
 void transfer1(void);
 void transfer2(void);

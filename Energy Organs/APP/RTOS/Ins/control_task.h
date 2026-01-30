@@ -5,6 +5,7 @@
 
 typedef struct
 {uint8_t mode;//0为未击打，1为待击打，2为完成
+//->未激活=已经击打=0,...
 }leaf;
 
 //void clean_energe_leaf_flag(void);

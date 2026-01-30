@@ -36,9 +36,9 @@ void transfer1(void) {
   //// enable DMA channel 6 	TIM_Cmd(TIM5, ENABLE);
   //// enable Timer 3 		TIM_CCxCmd(TIM5, TIM_Channel_1, TIM_CCx_Enable);
   //	while(!DMA_GetFlagStatus(DMA1_Stream2,DMA_FLAG_TCIF2)) ; 	// wait
-  //until transfer complete TIM_CCxCmd(TIM5, TIM_Channel_1, TIM_CCx_Disable);
+  // until transfer complete TIM_CCxCmd(TIM5, TIM_Channel_1, TIM_CCx_Disable);
   //	DMA_Cmd(DMA1_Stream2, DISABLE); 			// disable DMA
-  //channel 6 	DMA_ClearFlag(DMA1_Stream2,DMA_FLAG_TCIF2);
+  // channel 6 	DMA_ClearFlag(DMA1_Stream2,DMA_FLAG_TCIF2);
   //// clear DMA1 Channel 6 transfer complete flag
   //
 
@@ -373,15 +373,66 @@ void side_on(uint16_t leaf) {
   }
 }
 
+void LED_Strip(uint16_t leaf) {
+  int mode;
+
+  // j 代表灯臂的 5 个段 (0-4)
+  for (int j = 0; j < 5; j++) {
+    // 【关键逻辑】只有在当前激活进度内的段才显示
+    // game_stage = 1 时，显示 j=0 的段 (1/5)
+    // game_stage = 2 时，显示 j=0,1 的段 (2/5)
+    if (j < game_stage) {
+      for (int k = 0; k < 8; k++) {
+        int line = j * 8 + k;
+        for (int p = 1; p <= 8; p++) {
+          my_ws2812_1_set(leaf, line * 8 + p, current_r, 0, 0);
+        }
+      }
+    } else {
+      // --- 未激活区域：强制熄灭 ---
+      // 每个 j 段包含 8 行 (line)，每行 8 颗灯珠
+      // 段 j 的行范围是: [j*8] 到 [j*8 + 7]
+      for (int k = 0; k < 8; k++) {
+        int line = j * 8 + k;
+        // 熄灭该行对应的 8 颗灯珠 (索引 line*8+1 到 line*8+8)
+        for (int p = 1; p <= 8; p++) {
+          my_ws2812_1_set(leaf, line * 8 + p, 0, 0, 0);
+        }
+      }
+    }
+  }
+}
+
+// 已经被strip替换
 void LED_current(uint16_t leaf) {
   int mode;
+
+  // j 代表灯臂的 5 个段 (0-4)
   for (int j = 0; j < 5; j++) {
-    for (int i = 0; i < 4; i++) {
-      mode = led_time1 - i;
-      while (mode < 1)
-        mode += 8;
-      LED_current_mode(leaf, mode, 3 - i + j * 8);
-      LED_current_mode(leaf, mode, 4 + i + j * 8);
+    // 【关键逻辑】只有在当前激活进度内的段才显示流水灯
+    // game_stage = 1 时，显示 j=0 的段 (1/5)
+    // game_stage = 2 时，显示 j=0,1 的段 (2/5)
+    if (j < game_stage) {
+      // --- 激活区域：正常播放流水灯特效 ---
+      for (int i = 0; i < 4; i++) {
+        mode = led_time1 - i;
+        while (mode < 1)
+          mode += 8;
+        // 计算行号并显示
+        LED_current_mode(leaf, mode, 3 - i + j * 8);
+        LED_current_mode(leaf, mode, 4 + i + j * 8);
+      }
+    } else {
+      // --- 未激活区域：强制熄灭 ---
+      // 每个 j 段包含 8 行 (line)，每行 8 颗灯珠
+      // 段 j 的行范围是: [j*8] 到 [j*8 + 7]
+      for (int k = 0; k < 8; k++) {
+        int line = j * 8 + k;
+        // 熄灭该行对应的 8 颗灯珠 (索引 line*8+1 到 line*8+8)
+        for (int p = 1; p <= 8; p++) {
+          my_ws2812_1_set(leaf, line * 8 + p, 0, 0, 0);
+        }
+      }
     }
   }
 }
@@ -398,33 +449,9 @@ void LED_current_all_off(uint16_t leaf) {
   }
 }
 
-// ==================== [修改] 灯臂进度条显示 ====================
 void LED_circle(uint16_t leaf) {
-  // 1. 通关全亮 (判断当前灯臂状态是否为 all_finish)
-  if (LED[leaf].mode == all_finish) {
-    for (int i = CIRCLE6_START + 1; i <= MY_WS2812_MAX_NUM; i++) {
-      my_ws2812_1_set(leaf, i, 222, 0, 0);
-    }
-    return;
-  }
-
-  // 2. 根据 game_stage 显示进度 (0-5)
-  int start_idx = CIRCLE6_START + 1;
-  int total_leds = MY_WS2812_MAX_NUM - CIRCLE6_START;
-
-  // 计算亮灯数量：比例 = 当前进度 / 总关数5
-  int leds_on = 0;
-  if (game_stage > 0) {
-    leds_on = (int)((float)game_stage / 5.0f * (float)total_leds);
-  }
-
-  for (int i = 0; i < total_leds; i++) {
-    int current_idx = start_idx + i;
-    if (i < leds_on) {
-      my_ws2812_1_set(leaf, current_idx, 222, 0, 0);  // 亮红光
-    } else {
-      my_ws2812_1_set(leaf, current_idx, 0, 0, 0);  // 熄灭
-    }
+  for (int i = CIRCLE6_START + 1; i <= MY_WS2812_MAX_NUM; i++) {
+    my_ws2812_1_set(leaf, i, 222, 0, 0);
   }
 }
 
@@ -449,6 +476,49 @@ void LED_target(uint16_t leaf) {
   }
   for (int i = CIRCLE2_RESTART + 1; i <= MY_WS2812_MAX_NUM; i++) {
     my_ws2812_1_set(leaf, i, 254, 0, 0);
+  }
+}
+// 1.28
+
+void LED_target_allOff(uint16_t leaf) {
+  for (int i = CIRCLE6_START + 1; i <= CIRCLE5_START; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+  for (int i = CIRCLE5_START + 1; i <= CIRCLE4_START; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+  for (int i = CIRCLE4_START + 1; i <= CIRCLE3_START; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+  for (int i = CIRCLE3_START + 1; i <= CIRCLE2_START; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+  for (int i = CIRCLE2_START + 1; i <= CIRCLE1_START - 1; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+  for (int i = CIRCLE1_START; i <= CIRCLE2_RESTART; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+  for (int i = CIRCLE2_RESTART + 1; i <= MY_WS2812_MAX_NUM; i++) {
+    my_ws2812_1_set(leaf, i, 0, 0, 0);
+  }
+}
+
+void LED_currentAll(uint16_t leaf) {
+  int mode;
+
+  for (int j = 0; j < 5; j++) {
+    for (int i = 0; i < 4; i++) {
+      mode = led_time1 - i;
+
+      while (mode < 1)
+
+        mode += 8;
+
+      LED_current_mode(leaf, mode, 3 - i + j * 8);
+
+      LED_current_mode(leaf, mode, 4 + i + j * 8);
+    }
   }
 }
 
