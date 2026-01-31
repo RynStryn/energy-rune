@@ -42,7 +42,7 @@ uint8_t finish_flag = 0;
 uint8_t rand_finish = 0;
 uint8_t ready_to_reset = 0;
 
-uint8_t target_mode[5] = {0, 0, 0, 0, 1};  // 靶面控制
+uint8_t target_mode[5] = {0, 0, 0, 0, 0};  // 靶面控制
 // 0为未击打，1为待击打，2为完成
 //->未激活=已经击打=0,...
 void led_display_set(uint8_t m) {
@@ -245,7 +245,7 @@ void control_task(void) {
         // 1秒 (1000次tick) 结束后，无论是否击中第二个，都强行结束本轮
         if (bonus_window_timer >= 1000) {
           for (int i = 0; i < 5; i++) {
-            if (LED[i].mode == Waiting_hit)
+            if (LED[i].mode == Waiting_hit|| LED[i].mode == hit_finish)//"!"refresh"!" state
               LED[i].mode = LED_none;
           }
           flag_first_hit = 0;
