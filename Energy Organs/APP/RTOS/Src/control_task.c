@@ -83,7 +83,7 @@ void led_display_set(uint8_t m) {
     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
                         target_mode[2], target_mode[3], target_mode[4]};
     USART2_SendArray(tx_buf, 6);  // to 继电器,控制靶面
-  }//删掉这个会发送失败
+  }  // 删掉这个会发送失败
 }
 
 // =========================================
@@ -97,7 +97,7 @@ void LED_task(void) {
   if (time_tick % 50 == 20) {
     m = 3;
     led_display_set(m);
-		//     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
     //                     target_mode[2], target_mode[3], target_mode[4]};
     // USART2_SendArray(tx_buf, 6);
   }
@@ -105,7 +105,7 @@ void LED_task(void) {
   if (time_tick % 50 == 2) {
     m = 4;
     led_display_set(m);
-		//     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //     uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
     //                     target_mode[2], target_mode[3], target_mode[4]};
     // USART2_SendArray(tx_buf, 6);
   }
@@ -124,39 +124,39 @@ void LED_task(void) {
       case all_finish:
         target_mode[m] = 2;
         break;
-		}
-		// 	    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    }
+    // 	    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
     //                     target_mode[2], target_mode[3], target_mode[4]};
     // USART2_SendArray(tx_buf, 6);
-    }
-    if (time_tick % 50 == 42) {
-      m = 2;
-      switch (LED[m].mode) {
-        case Waiting_hit:
-          target_mode[m] = 1;
-          break;
-        case hit_finish:
-          target_mode[m] = 0;
-          break;
-        case LED_none:
-          target_mode[m] = 0;
-          break;
-        case all_finish:
-          target_mode[m] = 2;
-          break;
-      }
-		// 	    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
-    //                     target_mode[2], target_mode[3], target_mode[4]};
-    // USART2_SendArray(tx_buf, 6);
-    }
-
-    if (time_tick % 50 == 46) {
-      uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
-                          target_mode[2], target_mode[3], target_mode[4],
-                          target_mode[5]};
-      USART2_SendArray(tx_buf, 6);  // to 继电器,控制靶面
-    }
   }
+  if (time_tick % 50 == 42) {
+    m = 2;
+    switch (LED[m].mode) {
+      case Waiting_hit:
+        target_mode[m] = 1;
+        break;
+      case hit_finish:
+        target_mode[m] = 0;
+        break;
+      case LED_none:
+        target_mode[m] = 0;
+        break;
+      case all_finish:
+        target_mode[m] = 2;
+        break;
+    }
+    // 	    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+    //                     target_mode[2], target_mode[3], target_mode[4]};
+    // USART2_SendArray(tx_buf, 6);
+  }
+
+  if (time_tick % 50 == 46) {
+    uint8_t tx_buf[] = {0x40,           target_mode[0], target_mode[1],
+                        target_mode[2], target_mode[3], target_mode[4],
+                        target_mode[5]};
+    USART2_SendArray(tx_buf, 6);  // to 继电器,控制靶面
+  }
+}
 
 void control_task(void) {
   time_tick++;
@@ -180,26 +180,25 @@ void control_task(void) {
     }
 
     // ==================== [新增] 通关判定逻辑 ====================
-    if (game_stage >= 5) {
+    if (game_stage >= 5 && flag_first_hit == 0) {
       // 强制所有扇叶进入全亮状态
       for (int i = 0; i < 5; i++) {
         LED[i].mode = all_finish;
-        target_mode[m] = 2;
+        target_mode[i] = 2;
       }
       // 保持5秒展示 (假设 control_task 每 1ms 被调用一次)
       reset_time_cnt++;
 
-      
-            if (reset_time_cnt > 5000) {
-              game_stage = 0;
-              reset_time_cnt = 0;
-              flag_first_hit = 0;
-              bonus_window_timer = 0;
-              // 全灭重置
-              for (int i = 0; i < 5; i++)
-                LED[i].mode = LED_none;
-            }
-      
+      if (reset_time_cnt > 5000) {
+        game_stage = 0;
+        reset_time_cnt = 0;
+        flag_first_hit = 0;
+        bonus_window_timer = 0;
+        // 全灭重置
+        for (int i = 0; i < 5; i++)
+          LED[i].mode = LED_none;
+      }
+
       // 通关状态下只刷新灯效和检测按键，不再生成新目标
       LED_task();
 
@@ -245,7 +244,8 @@ void control_task(void) {
         // 1秒 (1000次tick) 结束后，无论是否击中第二个，都强行结束本轮
         if (bonus_window_timer >= 1000) {
           for (int i = 0; i < 5; i++) {
-            if (LED[i].mode == Waiting_hit|| LED[i].mode == hit_finish)//"!"refresh"!" state
+            if (LED[i].mode == Waiting_hit ||
+                LED[i].mode == hit_finish)  //"!"refresh"!" state
               LED[i].mode = LED_none;
           }
           flag_first_hit = 0;

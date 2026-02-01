@@ -58,37 +58,44 @@ uint16_t reset_time = 0;
  * @brief 核心裁判逻辑：处理击打、误打、连击及进度
 @note 压感器input、遥控器调试
  */
+// 定义在函数外部或作为静态变量
+int hit_protection_timer[5] = {0, 0, 0, 0, 0};  // 击打保护计时器
+#define PROTECTIONPERIOD 50                     // 保护期时长，单位ms
 void key_input(void) {
   // ================= 1. 读取传感器状态 =================
-  Flag_Input_1 = (Sucker_PB_5);   // LED[0]
-  Flag_Input_2 = (Sucker_PB_4);   // LED[1] (CAN接收或本地读取)
-  Flag_Input_3 = (Sucker_PB_3);   // LED[2] (CAN接收或本地读取)
-  Flag_Input_4 = (Sucker_PC_12);  // LED[3]
-  Flag_Input_5 = (Sucker_PC_11);  // LED[4]
-  Flag_Input_n = (Sucker_PA_1);   // 调试/遥控按钮
+  Flag_Input_1 = (Sucker_PB_5);
+  Flag_Input_2 = (Sucker_PB_4);
+  Flag_Input_3 = (Sucker_PB_3);
+  Flag_Input_4 = (Sucker_PC_12);
+  Flag_Input_5 = (Sucker_PC_11);
+  Flag_Input_n = (Sucker_PA_1);
 
-  // 遥控过符逻辑 (保留原有逻辑)
+  // 遥控过符逻辑
   if (Flag_Input_n == 1)
     flag_rc1 = 1;
   if (Flag_Input_n == 0 && flag_rc1 == 1)
     flag_rc11 = 1;
 
-  // 整理为数组便于循环处理
   int Sensors_Current[5] = {Flag_Input_1, Flag_Input_2, Flag_Input_3,
                             Flag_Input_4, Flag_Input_5};
   int Sensors_Last[5] = {Flag_Input_1_Last, Flag_Input_2_Last,
                          Flag_Input_3_Last, Flag_Input_4_Last,
                          Flag_Input_5_Last};
 
-  // ================= 2. 核心裁判逻辑 (循环判定) =================
+  // ================= 2. 核心裁判逻辑 =================
   for (int i = 0; i < 5; i++) {
-    // 模拟遥控击打 (如果处于等待状态且触发了遥控按钮)
+    // [新增] 计时器倒数：保护期内递减
+    if (hit_protection_timer[i] > 0) {
+      hit_protection_timer[i]--;
+    }
+
+    // 模拟遥控击打
     if (LED[i].mode == Waiting_hit && flag_rc11 == 1) {
-      Sensors_Current[i] = 1;  // 强制模拟上升沿
+      Sensors_Current[i] = 1;
       if (i == 4) {
         flag_rc1 = 0;
         flag_rc11 = 0;
-      }  // 最后一个处理完后重置遥控标号
+      }
     }
 
     // 上升沿检测 (由 0 变 1)
@@ -96,35 +103,41 @@ void key_input(void) {
       if (LED[i].mode == Waiting_hit) {
         // --- [A] 有效击打 ---
         LED[i].mode = hit_finish;
-        count_reset = 0;  // 击中即重置超时计数
+        count_reset = 0;
+
+        // [新增] 开启200ms保护期 (假设函数1ms调用一次)
+        // 只有过了这200ms，再次击打才会触发下面的惩罚
+        hit_protection_timer[i] = PROTECTIONPERIOD;
 
         if (flag_first_hit == 0) {
-          // 本轮首击成功
           flag_first_hit = 1;
-          game_stage++;            // 进度增加
-          bonus_window_timer = 0;  // 开启连击计时窗口
+          game_stage++;
+          bonus_window_timer = 0;
         } else {
-          // 本轮连击成功 (击中第二个目标)
-          // 设置计时器达到阈值，通知 control_task 结束本轮并进入下一轮
           bonus_window_timer = 1000;
         }
-      } else if (LED[i].mode == LED_none) {
-        // --- [B] 误击惩罚 (击中灭掉的扇叶) ---
-        game_stage = 0;      // 进度清零
-        count_reset = 4000;  // 强制触发超时重置效果
+      }
+      // --- [B] 惩罚逻辑 (合并了灭灯误击 和 重复击打) ---
+      else if (LED[i].mode == LED_none || LED[i].mode == hit_finish) {
+        // [关键] 只有当保护期结束后，才进行惩罚判定
+        if (hit_protection_timer[i] == 0) {
+          game_stage = 0;      // 进度清零
+          count_reset = 4000;  // 强制触发超时重置
+
+          // 可选：为了防止惩罚连续触发，也可以给惩罚加一点CD
+          hit_protection_timer[i] = PROTECTIONPERIOD*2;
+        }
       }
     }
   }
 
-  // 遥控清理（确保循环外重置）
+  // 遥控清理
   if (flag_rc11 == 1) {
     flag_rc1 = 0;
     flag_rc11 = 0;
   }
 
-  // ================= 3. 超时/手动重置判定 =================
-
-  // 只有在未完成首击时才进行常规超时计算 (2.5秒示例)
+  // ================= 3. 超时/手动重置判定 (保持不变) =================
   if (flag_first_hit == 0 && game_stage < 5) {
     int any_active = 0;
     for (int k = 0; k < 5; k++)
@@ -133,19 +146,15 @@ void key_input(void) {
 
     if (any_active) {
       count_reset++;
-      
-if (count_reset >= 2500)  // 2.5s 超时
-      {
-        game_stage = 0;  // 失败重置进度
+      if (count_reset >= 2500) {
+        game_stage = 0;
         for (int k = 0; k < 5; k++)
           LED[k].mode = LED_none;
         count_reset = 0;
       }
-
     }
   }
 
-  // 原有手动重置逻辑
   if (ready_to_reset == 1 && RC_CtrlData.rc.s2 == 3)
     count_reset = 20000;
 
@@ -153,6 +162,9 @@ if (count_reset >= 2500)  // 2.5s 超时
     for (int k = 0; k < 5; k++)
       LED[k].mode = LED_none;
     count_reset = 0;
+    // [新增] 重置时也要清空保护计时器
+    for (int k = 0; k < 5; k++)
+      hit_protection_timer[k] = 0;
   }
 
   // ================= 4. 更新状态历史 =================
@@ -162,7 +174,6 @@ if (count_reset >= 2500)  // 2.5s 超时
   Flag_Input_4_Last = Flag_Input_4;
   Flag_Input_5_Last = Flag_Input_5;
 }
-
 // ================= 底层初始化函数 (保持原样) =================
 
 void LED_Init(void) {
