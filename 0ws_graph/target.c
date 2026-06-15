@@ -55,7 +55,7 @@ void Target_InitAll(void)
     g_target[0].face.port_b      = GPIOD;
     g_target[0].face.pin_b       = GPIO_PIN_0;
 
-    g_target[1].strip.htim       = &htim2;
+    g_target[1].strip.htim       = &htim3;
     g_target[1].strip.channel    = TIM_CHANNEL_2;
     g_target[1].strip.dma_buffer = dma_buf_1;
     g_target[1].strip.map        = map;
@@ -82,8 +82,8 @@ void Target_InitAll(void)
     g_target[3].face.port_b      = GPIOD;
     g_target[3].face.pin_b       = GPIO_PIN_3;
 
-    g_target[4].strip.htim       = &htim5;
-    g_target[4].strip.channel    = TIM_CHANNEL_1;
+    g_target[4].strip.htim       = &htim1;
+    g_target[4].strip.channel    = TIM_CHANNEL_4;
     g_target[4].strip.dma_buffer = dma_buf_4;
     g_target[4].strip.map        = map;
     g_target[4].face.port_a      = GPIOB;
@@ -260,7 +260,7 @@ void Target_TransferAll(void)
     for (int i = 0; i < 5; ++i) {
         //非流水灯 且与上次相同，则不用更新
 
-        if (i == 1 || i == 4) {
+        if (0) {
             Target_TransferNoDMA(i);
         } else {
             Target_TransferSingle(&g_target[i].strip);
@@ -478,11 +478,14 @@ void Target_SequentialTest(void)
 static uint16_t time=0;
         if (time == 0)
         {
-            Target_TransferNoDMA(1);
-            //Target_TransferNoDMA(4);
-            Target_TransferNoDMA(0);
-            Target_TransferNoDMA(2);
-            Target_TransferNoDMA(3 );
+            Target_TransferAll();
+            // Target_TransferNoDMA(1);
+            // Target_TransferNoDMA(4);
+            // Target_TransferNoDMA(0);
+            // Target_TransferNoDMA(2);
+            // Target_TransferNoDMA(3 );
+
+
             // Target_TransferSingle(&g_target[1].strip);
             // Target_TransferSingle(&g_target[4].strip);
         // if (time >= 60000)

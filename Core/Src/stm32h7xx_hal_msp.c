@@ -24,9 +24,13 @@
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef hdma_tim1_ch1;
 
+extern DMA_HandleTypeDef hdma_tim1_ch4;
+
 extern DMA_HandleTypeDef hdma_tim2_ch2;
 
 extern DMA_HandleTypeDef hdma_tim3_ch3;
+
+extern DMA_HandleTypeDef hdma_tim3_ch2;
 
 extern DMA_HandleTypeDef hdma_tim4_ch1;
 
@@ -84,83 +88,6 @@ void HAL_MspInit(void)
   /* USER CODE BEGIN MspInit 1 */
 
   /* USER CODE END MspInit 1 */
-}
-
-/**
-  * @brief FDCAN MSP Initialization
-  * This function configures the hardware resources used in this example
-  * @param hfdcan: FDCAN handle pointer
-  * @retval None
-  */
-void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-  if(hfdcan->Instance==FDCAN1)
-  {
-    /* USER CODE BEGIN FDCAN1_MspInit 0 */
-
-    /* USER CODE END FDCAN1_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
-    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    /* Peripheral clock enable */
-    __HAL_RCC_FDCAN_CLK_ENABLE();
-
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**FDCAN1 GPIO Configuration
-    PA11     ------> FDCAN1_RX
-    PA12     ------> FDCAN1_TX
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF9_FDCAN1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /* USER CODE BEGIN FDCAN1_MspInit 1 */
-
-    /* USER CODE END FDCAN1_MspInit 1 */
-
-  }
-
-}
-
-/**
-  * @brief FDCAN MSP De-Initialization
-  * This function freeze the hardware resources used in this example
-  * @param hfdcan: FDCAN handle pointer
-  * @retval None
-  */
-void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* hfdcan)
-{
-  if(hfdcan->Instance==FDCAN1)
-  {
-    /* USER CODE BEGIN FDCAN1_MspDeInit 0 */
-
-    /* USER CODE END FDCAN1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_FDCAN_CLK_DISABLE();
-
-    /**FDCAN1 GPIO Configuration
-    PA11     ------> FDCAN1_RX
-    PA12     ------> FDCAN1_TX
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
-
-    /* USER CODE BEGIN FDCAN1_MspDeInit 1 */
-
-    /* USER CODE END FDCAN1_MspDeInit 1 */
-  }
-
 }
 
 /**
@@ -254,6 +181,24 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
 
     __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_CC1],hdma_tim1_ch1);
 
+    /* TIM1_CH4 Init */
+    hdma_tim1_ch4.Instance = DMA1_Stream6;
+    hdma_tim1_ch4.Init.Request = DMA_REQUEST_TIM1_CH4;
+    hdma_tim1_ch4.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_tim1_ch4.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_tim1_ch4.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_tim1_ch4.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_tim1_ch4.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_tim1_ch4.Init.Mode = DMA_NORMAL;
+    hdma_tim1_ch4.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_tim1_ch4.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_tim1_ch4) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(htim_pwm,hdma[TIM_DMA_ID_CC4],hdma_tim1_ch4);
+
     /* USER CODE BEGIN TIM1_MspInit 1 */
 
     /* USER CODE END TIM1_MspInit 1 */
@@ -327,6 +272,24 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
     }
 
     __HAL_LINKDMA(htim_base,hdma[TIM_DMA_ID_CC3],hdma_tim3_ch3);
+
+    /* TIM3_CH2 Init */
+    hdma_tim3_ch2.Instance = DMA1_Stream7;
+    hdma_tim3_ch2.Init.Request = DMA_REQUEST_TIM3_CH2;
+    hdma_tim3_ch2.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_tim3_ch2.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_tim3_ch2.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_tim3_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_tim3_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_tim3_ch2.Init.Mode = DMA_NORMAL;
+    hdma_tim3_ch2.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_tim3_ch2.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_tim3_ch2) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(htim_base,hdma[TIM_DMA_ID_CC2],hdma_tim3_ch2);
 
     /* USER CODE BEGIN TIM3_MspInit 1 */
 
@@ -406,8 +369,10 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
 
     /* USER CODE END TIM1_MspPostInit 0 */
     __HAL_RCC_GPIOE_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**TIM1 GPIO Configuration
     PE9     ------> TIM1_CH1
+    PA11     ------> TIM1_CH4
     */
     GPIO_InitStruct.Pin = GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -415,6 +380,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_11;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USER CODE BEGIN TIM1_MspPostInit 1 */
 
@@ -450,11 +422,19 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM3 GPIO Configuration
     PB0     ------> TIM3_CH3
+    PB5     ------> TIM3_CH2
     */
     GPIO_InitStruct.Pin = GPIO_PIN_0;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_5;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -524,6 +504,7 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* htim_pwm)
 
     /* TIM1 DMA DeInit */
     HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_CC1]);
+    HAL_DMA_DeInit(htim_pwm->hdma[TIM_DMA_ID_CC4]);
     /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
     /* USER CODE END TIM1_MspDeInit 1 */
@@ -563,6 +544,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
 
     /* TIM3 DMA DeInit */
     HAL_DMA_DeInit(htim_base->hdma[TIM_DMA_ID_CC3]);
+    HAL_DMA_DeInit(htim_base->hdma[TIM_DMA_ID_CC2]);
     /* USER CODE BEGIN TIM3_MspDeInit 1 */
 
     /* USER CODE END TIM3_MspDeInit 1 */
