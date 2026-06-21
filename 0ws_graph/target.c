@@ -83,8 +83,8 @@ void Target_InitAll(void)
     g_target[3].face.pin_b       = GPIO_PIN_3;
 
     g_target[4].strip.htim       = &htim1;
-    g_target[4].strip.channel    = TIM_CHANNEL_4;
     g_target[4].strip.dma_buffer = dma_buf_4;
+    g_target[4].strip.channel    = TIM_CHANNEL_4;
     g_target[4].strip.map        = map;
     g_target[4].face.port_a      = GPIOB;
     g_target[4].face.pin_a       = GPIO_PIN_8;
@@ -280,7 +280,7 @@ void Target_TransferChangePart(void)
         if (g_target[i].strip.panel_change)
         {
             Target_LoadLED(i);
-            if (i==1||i==4)
+            if (0)
             {
                 __disable_irq();
                 Target_TransferNoDMA(i);

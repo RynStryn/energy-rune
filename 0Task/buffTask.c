@@ -191,7 +191,7 @@ static void BigRuneLoop(uint32_t now)
             {
                 //
             }
-            t1=1;t2=4;
+
             g_target[t1].strip.state = Waiting_hit;
             g_target[t2].strip.state = Waiting_hit;
 

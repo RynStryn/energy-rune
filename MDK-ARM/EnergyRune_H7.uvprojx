@@ -654,11 +654,6 @@
           <GroupName>driver</GroupName>
           <Files>
             <File>
-              <FileName>can.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\2Driver\can.c</FilePath>
-            </File>
-            <File>
               <FileName>target_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\2Driver\target_driver.c</FilePath>
