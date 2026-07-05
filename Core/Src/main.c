@@ -62,7 +62,7 @@ DMA_HandleTypeDef hdma_tim4_ch1;
 DMA_HandleTypeDef hdma_tim5_ch1;
 
 /* USER CODE BEGIN PV */
-int rune_mode = BIG_RUNE;
+uint8_t reset_flag = 0;
 gError_t gError = {0, 0, 0};
 
 /* USER CODE END PV */
@@ -139,13 +139,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Target_InitAll();
 
-  // 读取 PA9 电平选择大小符模式: 0V=小符, 3.3V=大符
-  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9) == GPIO_PIN_RESET) {
-    g_game.rune_mode = SMALL_RUNE;
-  } else {
-    g_game.rune_mode = BIG_RUNE;
+  // 读取 PA 电平选择大小符模式: 0V=小符, 3.3V=大符
+  if ( (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == GPIO_PIN_RESET))
+  {
+      g_game.rune_mode = SMALL_RUNE;
   }
-  rune_mode = g_game.rune_mode;
+  else
+  {
+      g_game.rune_mode = BIG_RUNE;
+  }
 
   buffTask_Init();
 
@@ -160,18 +162,33 @@ int main(void)
   {
     uint32_t last_logic = 0;
     uint32_t last_flush = 0;
-
+    uint32_t last_switch = 0;
+    uint8_t  last_mode   = g_game.rune_mode;
     while (1)
 
     {
 
       uint32_t now = DWT->CYCCNT;
 
+        while ((uint32_t)(now - last_switch) >= SwITCH_PERIOD)
+        {
+            last_switch+=SwITCH_PERIOD;
+            if ((HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == GPIO_PIN_RESET))
+                {
+                g_game.rune_mode = SMALL_RUNE;
+            } else {
+                g_game.rune_mode = BIG_RUNE;
+            }
+            if (g_game.rune_mode != last_mode)
+                {reset_flag=1;}
+            last_mode=g_game.rune_mode;
+        }
+
       while ((uint32_t)(now - last_logic) >= LOGIC_PERIOD)
       {
         last_logic += LOGIC_PERIOD;
         buffTask_loop(now);
-        //  Target_SequentialTest();
+          //strip_SequentialTest();
       }
 
       while ((uint32_t)(now - last_flush) >= LED_REFRESH_PERIOD)
@@ -188,7 +205,7 @@ int main(void)
         for (int i = 0; i < 5; i++)
           Target_SetFace(i, g_target[i].face.mode);
       }
-
+// Target_FaceTest();
     }
   }
     /* USER CODE END WHILE */
@@ -680,10 +697,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  /*Configure GPIO pins : PA9 PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD0 PD1 PD2 PD3

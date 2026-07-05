@@ -10,6 +10,7 @@
 #define US(x)            ((uint32_t)((x) * CPU_FREQ_MHZ))
 #define MS(x)            US((x) * 1000)
 
+#define SwITCH_PERIOD     MS(500)
 #define LOGIC_PERIOD      MS(1)
 
 #define LED_REFRESH_PERIOD   MS(100)

@@ -494,11 +494,6 @@
               <FilePath>../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c</FilePath>
             </File>
             <File>
-              <FileName>stm32h7xx_hal_fdcan.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32h7xx_hal_rng.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rng.c</FilePath>
@@ -652,13 +647,6 @@
         </Group>
         <Group>
           <GroupName>driver</GroupName>
-          <Files>
-            <File>
-              <FileName>target_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\2Driver\target_driver.c</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>ws_graph</GroupName>

@@ -27,6 +27,7 @@ void hitDetect(uint32_t now)
 
         if (s->last_input == 0 && current_input == 1)
         {
+            Target_RecordHit(i);
             if (s->state == Waiting_hit)
             {
                 s->state              = hit_finish;
@@ -45,7 +46,19 @@ void hitDetect(uint32_t now)
         s->last_input = current_input;
     }
 }
-
+static void rune_reset(void)
+{
+    g_game.success_start = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        g_target[i].strip.state = LED_none;
+        g_target[i].face.mode   = 0;
+    }
+    g_game.game_stage     = 0;
+    g_game.flag_first_hit = 0;
+    g_game.bonus_start    = 0;
+    g_game.big_rune_state = STATE_GENERATE;
+}
 // ================= SMALL_RUNE =================
 static void SmallRuneLoop(uint32_t now)
 {
@@ -53,23 +66,18 @@ static void SmallRuneLoop(uint32_t now)
     {
         if (g_game.success_start == 0)
             g_game.success_start = now;
-        if ((uint32_t)(now - g_game.success_start) > SUCCESS_SHOW_MS)
+        if ((uint32_t) (now - g_game.success_start) > SUCCESS_SHOW_MS)
         {
-            g_game.success_start = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                g_target[i].strip.state = LED_none;
-                g_target[i].face.mode   = 0;
-            }
-            g_game.game_stage     = 0;
-            g_game.flag_first_hit = 0;
-            g_game.bonus_start    = 0;
+            rune_reset();
         }
-        for (int m = 0; m < 5; m++)
+        else
         {
-            if (g_target[m].strip.state != all_finish)
-                g_target[m].strip.state = all_finish;
-            g_target[m].face.mode = 2;
+            for (int m = 0; m < 5; m++)
+            {
+                if (g_target[m].strip.state != all_finish)
+                    g_target[m].strip.state = all_finish;
+                g_target[m].face.mode = 2;
+            }
         }
         return;
     }
@@ -134,30 +142,25 @@ static void SmallRuneLoop(uint32_t now)
     }
 }
 
+
 // ================= BIG_RUNE =================
 static void BigRuneLoop(uint32_t now)
 {
-    if (g_game.game_stage >= 5)
+    if (g_game.game_stage >= 6)
     {
         if (g_game.success_start == 0)
             g_game.success_start = now;
         if ((uint32_t)(now - g_game.success_start) > SUCCESS_SHOW_MS)
         {
-            g_game.success_start  = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                g_target[i].strip.state = LED_none;
-                g_target[i].face.mode   = 0;
-            }
-            g_game.game_stage     = 0;
-            g_game.flag_first_hit = 0;
-            g_game.bonus_start    = 0;
-            g_game.big_rune_state = STATE_GENERATE;
+            rune_reset();
         }
-        for (int m = 0; m < 5; m++)
+        else
         {
-            g_target[m].strip.state = all_finish;
-            g_target[m].face.mode   = 2;
+            for (int m = 0; m < 5; m++)
+            {
+                g_target[m].strip.state = all_finish;
+                g_target[m].face.mode   = 2;
+            }
         }
         return;
     }
@@ -241,6 +244,13 @@ static void BigRuneLoop(uint32_t now)
             if (hit_cnt == 2
                 || (uint32_t)(now - g_game.bonus_start) > BONUS_WINDOW_MS)
             {
+                // 最后一关已经完成一次命中
+                // 等待BONUS窗口结束后再进入结算
+                if (g_game.game_stage == 5)
+                {
+                    g_game.game_stage = 6;
+                }
+
                 g_game.big_rune_state = STATE_GENERATE;
             }
             break;
@@ -387,7 +397,6 @@ static void Test_LED_Chaser(void)
         }
     }
 }
-
 // ================= 主循环 =================
 void buffTask_loop(uint32_t now)
 {
@@ -409,7 +418,11 @@ void buffTask_loop(uint32_t now)
     }
 
     hitDetect(now);
-
+if (reset_flag==1)
+{
+    reset_flag = 0;
+    rune_reset();
+}
     if (g_game.rune_mode == 0)
         SmallRuneLoop(now);
     if (g_game.rune_mode == 1)

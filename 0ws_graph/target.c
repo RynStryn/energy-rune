@@ -42,6 +42,19 @@ static const SensorPin_t s_sensor[5] = {
 extern const uint16_t map[PANEL_ROWS][PANEL_COLS];
 
 /* ============================================================
+ *  击打记录缓冲
+ * ============================================================ */
+volatile uint8_t g_hit_log[HIT_LOG_SIZE];
+volatile uint8_t g_hit_log_cnt = 0;
+
+void Target_RecordHit(uint8_t idx)
+{
+    if (idx >= 5) return;
+    if (g_hit_log_cnt < HIT_LOG_SIZE)
+        g_hit_log[g_hit_log_cnt++] = idx;
+}
+
+/* ============================================================
  *  Target_InitAll - 初始化所有 5 个靶子
  * ============================================================ */
 void Target_InitAll(void)
@@ -50,10 +63,10 @@ void Target_InitAll(void)
     g_target[0].strip.channel    = TIM_CHANNEL_1;
     g_target[0].strip.dma_buffer = dma_buf_0;
     g_target[0].strip.map        = map;
-    g_target[0].face.port_a      = GPIOB;
-    g_target[0].face.pin_a       = GPIO_PIN_7;
-    g_target[0].face.port_b      = GPIOD;
-    g_target[0].face.pin_b       = GPIO_PIN_0;
+    g_target[0].face.port_b      = GPIOB;
+    g_target[0].face.pin_b       = GPIO_PIN_7;
+    g_target[0].face.port_a      = GPIOD;
+    g_target[0].face.pin_a       = GPIO_PIN_0;
 
     g_target[1].strip.htim       = &htim3;
     g_target[1].strip.channel    = TIM_CHANNEL_2;
@@ -68,28 +81,28 @@ void Target_InitAll(void)
     g_target[2].strip.channel    = TIM_CHANNEL_3;
     g_target[2].strip.dma_buffer = dma_buf_2;
     g_target[2].strip.map        = map;
-    g_target[2].face.port_a      = GPIOB;
-    g_target[2].face.pin_a       = GPIO_PIN_9;
-    g_target[2].face.port_b      = GPIOD;
-    g_target[2].face.pin_b       = GPIO_PIN_2;
+    g_target[2].face.port_b      = GPIOB;
+    g_target[2].face.pin_b       = GPIO_PIN_9;
+    g_target[2].face.port_a      = GPIOD;
+    g_target[2].face.pin_a       = GPIO_PIN_2;
 
     g_target[3].strip.htim       = &htim4;
     g_target[3].strip.channel    = TIM_CHANNEL_1;
     g_target[3].strip.dma_buffer = dma_buf_3;
     g_target[3].strip.map        = map;
-    g_target[3].face.port_a      = GPIOE;
-    g_target[3].face.pin_a       = GPIO_PIN_0;
-    g_target[3].face.port_b      = GPIOD;
-    g_target[3].face.pin_b       = GPIO_PIN_3;
+    g_target[3].face.port_b      = GPIOE;
+    g_target[3].face.pin_b       = GPIO_PIN_0;
+    g_target[3].face.port_a      = GPIOD;
+    g_target[3].face.pin_a       = GPIO_PIN_3;
 
     g_target[4].strip.htim       = &htim1;
     g_target[4].strip.dma_buffer = dma_buf_4;
     g_target[4].strip.channel    = TIM_CHANNEL_4;
     g_target[4].strip.map        = map;
-    g_target[4].face.port_a      = GPIOB;
-    g_target[4].face.pin_a       = GPIO_PIN_8;
-    g_target[4].face.port_b      = GPIOD;
-    g_target[4].face.pin_b       = GPIO_PIN_1;
+    g_target[4].face.port_b      = GPIOB;
+    g_target[4].face.pin_b       = GPIO_PIN_8;
+    g_target[4].face.port_a      = GPIOD;
+    g_target[4].face.pin_a       = GPIO_PIN_1;
 //2与5对调继电器引脚
 
     // 初始化所有 strip 和 face
@@ -447,7 +460,7 @@ static void delay_loop(volatile uint32_t t)
     }
 }
 
-void Target_SequentialTest(void)
+void strip_SequentialTest(void)
 {
     static const uint8_t colors[5][3] = {
         {255, 0, 0},    // 0: 红
