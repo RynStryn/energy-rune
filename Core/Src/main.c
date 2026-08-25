@@ -187,8 +187,8 @@ int main(void)
       while ((uint32_t)(now - last_logic) >= LOGIC_PERIOD)
       {
         last_logic += LOGIC_PERIOD;
-        buffTask_loop(now);
-          //strip_SequentialTest();
+         buffTask_loop(now);
+        //  strip_SequentialTest();
       }
 
       while ((uint32_t)(now - last_flush) >= LED_REFRESH_PERIOD)

@@ -29,7 +29,7 @@
 #define STRIP_COLS           40
 #define DMA_BUFF_SIZE        (STRIP_LEDS_PER_LEAF * 24 * 2)  // 15360
 
-// WS2812B 时序 (TIM period = 299, 240MHz TIM clock)
+// WS2812B 时序
 #define TIMING_ONE   180
 #define TIMING_ZERO   72
 
@@ -64,7 +64,7 @@ typedef struct {
 
 
 typedef struct {
-    //  硬件绑定 
+    //  硬件
     TIM_HandleTypeDef *htim;
     uint32_t           channel;
     volatile uint16_t *dma_buffer;   // [DMA_BUFF_SIZE]
@@ -78,11 +78,11 @@ typedef struct {
 
     //  状态 
     LED_mode_type state;
-    uint32_t      hit_timestamp;      // 命中保护到期时间
+    uint32_t      hit_timestamp;
     uint8_t       last_input;
     uint8_t       animation_frame;
-    uint8_t       water_flow_active;  // 水流动画激活标志
-    uint8_t       panel_change;        // 面板变化标记
+    uint8_t       water_flow_active;
+    uint8_t       panel_change;
 } LEDStrip_t;
 
 
@@ -124,10 +124,10 @@ void Target_ClearStrip(uint8_t idx);
 void Target_LoadLED(uint8_t idx);
 void Target_TransferAll(void);
 uint8_t Target_ReadSensor(uint8_t idx);
-void Target_LoadLEDPtr(LEDStrip_t *s);  // 直接接受指针的便捷版本
-void strip_SequentialTest(void);       // 逐块灯板点亮测试
-void Target_TransferNoDMA(uint8_t idx); // CPU直驱测试(绕过DMA)
-void Target_FaceTest(void);             // 靶面继电器循环测试
-void Target_TransferChangePart(void);        // 仅传输已变化的strip
+void Target_LoadLEDPtr(LEDStrip_t *s);
+void strip_SequentialTest(void);
+void Target_TransferNoDMA(uint8_t idx);
+void Target_FaceTest(void);
+void Target_TransferChangePart(void);
 
 #endif // TARGET_H

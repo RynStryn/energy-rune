@@ -59,7 +59,7 @@ static void rune_reset(void)
     g_game.bonus_start    = 0;
     g_game.big_rune_state = STATE_GENERATE;
 }
-// ================= SMALL_RUNE =================
+//  SMALL_RUNE
 static void SmallRuneLoop(uint32_t now)
 {
     if (g_game.game_stage >= 5)
@@ -143,7 +143,7 @@ static void SmallRuneLoop(uint32_t now)
 }
 
 
-// ================= BIG_RUNE =================
+//  BIG_RUNE
 static void BigRuneLoop(uint32_t now)
 {
     if (g_game.game_stage >= 6)
@@ -257,7 +257,7 @@ static void BigRuneLoop(uint32_t now)
     }
 }
 
-// ================= 同步 target_mode → g_target[].face.mode =================
+// target_mode -> g_target[].face.mode
 static void Game_UpdateTargetFaces(void)
 {
     for (int m = 0; m < 5; m++)
@@ -278,7 +278,7 @@ static void Game_UpdateTargetFaces(void)
     }
 }
 
-// ================= 灯效渲染 =================
+//  灯效渲染
 void Game_UpdateStripEffects(void)
 {
     static LED_mode_type prev[5]
@@ -356,13 +356,13 @@ void Game_UpdateStripEffects(void)
     }
 }
 
-// ================= 初始化 =================
+
 void buffTask_Init(void)
 {
-    // g_game 和 g_target[].strip.state 已在 Target_InitAll 中初始化
+
 }
 
-// ================= 测试流水灯 (TIM1_CH1, WS2812 逐列扫描) =================
+// 测试流水灯 (TIM1_CH1,逐列扫描)
 static void Test_LED_Chaser(void)
 {
     static uint8_t       pos         = 0;
@@ -397,7 +397,7 @@ static void Test_LED_Chaser(void)
         }
     }
 }
-// ================= 主循环 =================
+
 void buffTask_loop(uint32_t now)
 {
     if (g_game.flag_punish == 1)

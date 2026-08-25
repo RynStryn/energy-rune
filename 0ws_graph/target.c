@@ -1,30 +1,26 @@
 #include "target.h"
 #include <string.h>
 
-/* ============================================================
- * ============================================================ */
+
 #define dma_buf_0 ((volatile uint16_t*) 0x30000000)
 #define dma_buf_1 ((volatile uint16_t*) 0x30007800)
 #define dma_buf_2 ((volatile uint16_t*) 0x3000F000)
 #define dma_buf_3 ((volatile uint16_t*) 0x30016800)
 #define dma_buf_4 ((volatile uint16_t*) 0x3001E000)
-/* ============================================================
- * ============================================================ */
+
+
 Target_t    g_target[5];
 GameState_t g_game;
 
-/* ============================================================
- * ============================================================ */
+
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim5;
 
-/* ============================================================
- * ============================================================ */
 
-// 传感器 GPIO (每片叶子一个)
+
 typedef struct {
     GPIO_TypeDef* port;
     uint16_t      pin;
@@ -38,12 +34,12 @@ static const SensorPin_t s_sensor[5] = {
     {GPIOD, GPIO_PIN_10},   // Leaf 4
 };
 
-// 坐标系映射 (每片叶子物理布线相同)
+// 坐标映射
 extern const uint16_t map[PANEL_ROWS][PANEL_COLS];
 
-/* ============================================================
- *  击打记录缓冲
- * ============================================================ */
+/* 
+ *  击打记录.log for debug
+ *  */
 volatile uint8_t g_hit_log[HIT_LOG_SIZE];
 volatile uint8_t g_hit_log_cnt = 0;
 
@@ -54,9 +50,6 @@ void Target_RecordHit(uint8_t idx)
         g_hit_log[g_hit_log_cnt++] = idx;
 }
 
-/* ============================================================
- *  Target_InitAll - 初始化所有 5 个靶子
- * ============================================================ */
 void Target_InitAll(void)
 {
     g_target[0].strip.htim       = &htim1;
@@ -124,10 +117,9 @@ void Target_InitAll(void)
     g_game.rune_mode = 1;  // BIG_RUNE
 }
 
-/* ============================================================
- *  Target_SetFace - 设置靶面继电器
+/*
  *  mode: 0=熄灭, 1=中心(两路拉高), 2=全亮(A高B低)
- * ============================================================ */
+ *  */
 void Target_SetFace(uint8_t idx, uint8_t mode)
 {
     if (idx >= 5)
@@ -160,9 +152,7 @@ void Target_SetFace(uint8_t idx, uint8_t mode)
     }
 }
 
-/* ============================================================
- *  Target_SetLed - 设置虚拟面板单颗灯珠
- * ============================================================ */
+/* 设置虚拟面板单颗灯珠 */
 void Target_SetLed(uint8_t idx,
     uint8_t                x,
     uint8_t                y,
@@ -180,9 +170,8 @@ void Target_SetLed(uint8_t idx,
     s->panel_change         = 1;
 }
 
-/* ============================================================
- *  Target_ClearStrip - 清除灯带虚拟面板
- * ============================================================ */
+/* 清除虚拟面板
+ *  */
 void Target_ClearStrip(uint8_t idx)
 {
     if (idx >= 5)
@@ -193,10 +182,7 @@ void Target_ClearStrip(uint8_t idx)
 
 volatile uint32_t dbg[16] = {0};
 
-/* ============================================================
- *  Target_TransferSingle - 单路 DMA 轮询发送 (仿 F4)
- *  使用 HAL_DMA_Start (无中断) + 自旋等待，不依赖 ISR
- * ============================================================ */
+
 static uint32_t Ch2DmaId(uint32_t ch)
 {
     if (ch == TIM_CHANNEL_1)
@@ -208,16 +194,16 @@ static uint32_t Ch2DmaId(uint32_t ch)
     return TIM_DMA_ID_CC4;
 }
 
-static uint32_t Ch2DmaBit(uint32_t ch)
-{
-    if (ch == TIM_CHANNEL_1)
-        return TIM_DMA_CC1;
-    if (ch == TIM_CHANNEL_2)
-        return TIM_DMA_CC2;
-    if (ch == TIM_CHANNEL_3)
-        return TIM_DMA_CC3;
-    return TIM_DMA_CC4;
-}
+// static uint32_t Ch2DmaBit(uint32_t ch)
+// {
+//     if (ch == TIM_CHANNEL_1)
+//         return TIM_DMA_CC1;
+//     if (ch == TIM_CHANNEL_2)
+//         return TIM_DMA_CC2;
+//     if (ch == TIM_CHANNEL_3)
+//         return TIM_DMA_CC3;
+//     return TIM_DMA_CC4;
+// }
 
 static void Target_TransferSingle(LEDStrip_t* s)
 {
@@ -252,9 +238,9 @@ static void Target_TransferSingle(LEDStrip_t* s)
 
     HAL_TIM_PWM_Stop_DMA(htim, channel);
 }
-/* ============================================================
- *  Target_TransferAll - 逐路 DMA 发送
- * ============================================================ */
+/* 
+ 逐路 DMA 发送
+ *  */
 LED_mode_type last_state[5];
 uint8_t tick;
 void Target_TransferAll(void)
@@ -283,9 +269,8 @@ void Target_TransferAll(void)
     dbg[9]++;
 }
 
-/* ============================================================
- *  Target_TransferDirty - 仅传输 panel_dirty 为真的 strip
- * ============================================================ */
+/* 只传输变化的strip
+ *  */
 void Target_TransferChangePart(void)
 {
     for (int i = 0; i < 5; i++)
@@ -308,9 +293,9 @@ void Target_TransferChangePart(void)
     }
 }
 
-/* ============================================================
- *  Color2Pwm - 将 8-bit 颜色值转换为 PWM 序列
- * ============================================================ */
+/* 
+将颜色值转换为 PWM
+ *  */
 static void Color2Pwm(uint8_t color, volatile uint16_t* pwm_buf)
 {
     for (int8_t i = 7; i >= 0; i--)
@@ -319,48 +304,46 @@ static void Color2Pwm(uint8_t color, volatile uint16_t* pwm_buf)
     }
 }
 
-/* ============================================================
- *  Target_LoadLED - 虚拟面板 → GRB buffer + DMA buffer
- * ============================================================ */
-#if 0
-void Target_LoadLED(uint8_t idx) {
-  dbg[7]++;
-  if (idx >= 5)
-    return;
-  LEDStrip_t* s = &g_target[idx].strip;
 
-  memset(s->grb_buffer, 0, sizeof(s->grb_buffer));
-  for (uint8_t y = 0; y < STRIP_ROWS; y++) {
-    for (uint8_t x = 0; x < STRIP_COLS; x++) {
-      if (s->panel[y][x].enable) {
-        uint16_t led_idx = s->map[y][x];
-        s->grb_buffer[led_idx * 3 + 0] = s->panel[y][x].g;
-        s->grb_buffer[led_idx * 3 + 1] = s->panel[y][x].r;
-        s->grb_buffer[led_idx * 3 + 2] = s->panel[y][x].b;
-      }
-    }
-  }
+// #if 0
+// void Target_LoadLED(uint8_t idx) {
+//   dbg[7]++;
+//   if (idx >= 5)
+//     return;
+//   LEDStrip_t* s = &g_target[idx].strip;
+//
+//   memset(s->grb_buffer, 0, sizeof(s->grb_buffer));
+//   for (uint8_t y = 0; y < STRIP_ROWS; y++) {
+//     for (uint8_t x = 0; x < STRIP_COLS; x++) {
+//       if (s->panel[y][x].enable) {
+//         uint16_t led_idx = s->map[y][x];
+//         s->grb_buffer[led_idx * 3 + 0] = s->panel[y][x].g;
+//         s->grb_buffer[led_idx * 3 + 1] = s->panel[y][x].r;
+//         s->grb_buffer[led_idx * 3 + 2] = s->panel[y][x].b;
+//       }
+//     }
+//   }
+//
+//   volatile uint16_t* p_buf = s->dma_buffer;
+//   for (int i = 0; i < DMA_BUFF_SIZE; i++) {
+//     *p_buf++ = 0;
+//   }
+//   p_buf = s->dma_buffer;
+//   for (int i = 0; i < STRIP_LEDS_PER_LEAF; i++) {
+//     Color2Pwm(s->grb_buffer[i * 3 + 0], p_buf);
+//     p_buf += 8;
+//     Color2Pwm(s->grb_buffer[i * 3 + 1], p_buf);
+//     p_buf += 8;
+//     Color2Pwm(s->grb_buffer[i * 3 + 2], p_buf);
+//     p_buf += 8;
+//   }
+// }
+// #endif
 
-  volatile uint16_t* p_buf = s->dma_buffer;
-  for (int i = 0; i < DMA_BUFF_SIZE; i++) {
-    *p_buf++ = 0;
-  }
-  p_buf = s->dma_buffer;
-  for (int i = 0; i < STRIP_LEDS_PER_LEAF; i++) {
-    Color2Pwm(s->grb_buffer[i * 3 + 0], p_buf);
-    p_buf += 8;
-    Color2Pwm(s->grb_buffer[i * 3 + 1], p_buf);
-    p_buf += 8;
-    Color2Pwm(s->grb_buffer[i * 3 + 2], p_buf);
-    p_buf += 8;
-  }
-}
-#endif
-#if 1
 
-/* ============================================================
- *  Target_LoadLED - 虚拟面板 → GRB buffer + DMA buffer
- * ============================================================ */
+/*
+虚拟面板 -> GRB buffer -> DMA buffer
+ *  */
 void Target_LoadLED(uint8_t idx)
 {
     dbg[7]++;
@@ -383,7 +366,7 @@ void Target_LoadLED(uint8_t idx)
         }
     }
 
-    // 2. GRB buffer → DMA buffer (PWM 编码)
+    // 2. GRB buffer -> DMA buffer (PWM 编码)
     memset(s->dma_buffer, 0, DMA_BUFF_SIZE * sizeof(uint16_t));
     uint16_t* p_buf = s->dma_buffer;
     for (int i = 0; i < STRIP_LEDS_PER_LEAF; i++)
@@ -397,10 +380,8 @@ void Target_LoadLED(uint8_t idx)
     }
     s->panel_change = 0;
 }
-#endif
-/* ============================================================
- *  Target_LoadLEDPtr - 直接接受 LEDStrip_t* 指针的便捷版本
- * ============================================================ */
+
+/* 接受指针的版本 */
 void Target_LoadLEDPtr(LEDStrip_t* s)
 {
     memset(s->grb_buffer, 0, sizeof(s->grb_buffer));
@@ -436,9 +417,9 @@ void Target_LoadLEDPtr(LEDStrip_t* s)
     s->panel_change = 0;
 }
 
-/* ============================================================
- *  Target_ReadSensor - 读取传感器状态 (1=触发, 0=未触发)
- * ============================================================ */
+/* 
+读取传感器状态 (1=触发, 0=未触发)
+ *  */
 uint8_t Target_ReadSensor(uint8_t idx)
 {
     if (idx >= 5)
@@ -448,17 +429,10 @@ uint8_t Target_ReadSensor(uint8_t idx)
     return (state == GPIO_PIN_SET) ? 1 : 0;
 }
 
-/* ============================================================
- *  Target_SequentialTest - 逐块灯板点亮测试
- *  每块 Leaf 显示不同纯色，依次点亮，用于验证硬件映射
- * ============================================================ */
-static void delay_loop(volatile uint32_t t)
-{
-    while (t--)
-    {
-        __NOP();
-    }
-}
+/* 灯板点亮测试
+ *  每块 Leaf 显示不同纯色，依次点亮
+ */
+
 
 void strip_SequentialTest(void)
 {
@@ -512,10 +486,8 @@ static uint16_t time=0;
     }
 }
 
-/* ============================================================
- *  Target_TransferNoDMA - CPU直驱测试 (绕过DMA)
- *  使用UIF轮询逐比特更新CCR，验证定时器PWM硬件是否正常
- * ============================================================ */
+/* CPU直驱
+ *  */
 void Target_TransferNoDMA(uint8_t idx)
 {
     if (idx >= 5)
@@ -569,10 +541,9 @@ void Target_TransferNoDMA(uint8_t idx)
         tim->BDTR &= ~TIM_BDTR_MOE;
 }
 
-/* ============================================================
- *  Target_FaceTest - 靶面继电器循环测试
- *  所有5路靶面依次切换: 熄灭→中心→全亮→圆周
- * ============================================================ */
+/*  测试靶面继电器
+ *  依次: 熄灭->中心->全亮->圆周
+ *  */
 void Target_FaceTest(void)
 {
     const uint8_t modes[] = {0, 1, 2, 3};

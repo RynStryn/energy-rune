@@ -7,23 +7,14 @@
 
 #include <stdint.h>
 
-/* ============================================================
- *  颜色值类型 —— RGB 三通道
- * ============================================================
- *  使用结构体传递颜色，替代分散的 (r,g,b) 参数。
- *  在 ARM Cortex-M3 上，3 字节结构体通过寄存器传递，
- *  不会比三个分散的 uint8_t 参数产生额外开销。
- * ============================================================ */
+
 typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 } Color_t;
 
-/* ---- 常用颜色的工厂宏（在调用处构造临时 Color_t） ---- */
-#define COLOR_RGB(r_, g_, b_)  ((Color_t){(r_), (g_), (b_)})
 
-/* ---- 预定义颜色常量 (static const 可以内联到调用处) ---- */
 static const Color_t COLOR_BLACK   = {  0,   0,   0};
 static const Color_t COLOR_RED     = {200,   0,   0};
 static const Color_t COLOR_GREEN   = {  0, 200,   0};
