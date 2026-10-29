@@ -1,43 +1,37 @@
-# ==========================================
-# Keil MDK 编译产生的中间文件和输出文件
-# ==========================================
-*.obj
+# Build outputs
+build/
+MDK-ARM/EnergyRune_H7/
+MDK-ARM/JLinkLog.txt
+MDK-ARM/JLinkSettings.ini
+MDK-ARM/startup_stm32h743xx.lst
+MDK-ARM/EventRecorderStub.scvd
 *.o
-*.d
 *.crf
-*.lnp
+*.d
 *.axf
+*.hex
+*.map
+*.lnp
 *.htm
-*.build_log.htm
 *.dep
 *.iex
-*.i
-*.lst
-*.map
-*.sct
-*.uvgui.*
-*.uvguix.*
-# 注意：如果你希望别人拉取代码后直接能用 Keil 打开，请【不要】屏蔽 *.uvprojx
-
-# ==========================================
-# 编译输出目录 (根据你的结构，主要是 OBJ 文件夹)
-# ==========================================
-**/OBJ/
-**/Listings/
-**/Objects/
-**/DebugConfig/
-
-# ==========================================
-# IDE 相关 (VS Code & Keil)
-# ==========================================
-.vscode/
 *.bak
-*.orig
-*.swp
 
-# ==========================================
-# 系统与临时文件
-# ==========================================
-.DS_Store
-Thumbs.db
-node_modules/
+# IDE
+.idea/
+.vscode/
+.trae/
+.opencode/
+
+# CubeMX temp
+EnergyRune_H7.und/
+EnergyRune_H7ioc.txt
+
+# Static vendor drivers (not changed by CubeMX config changes)
+Drivers/
+
+# Misc
+build_output.txt
+project_structure.txt
+f4/
+.opencode
