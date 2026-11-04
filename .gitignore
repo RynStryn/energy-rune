@@ -31,8 +31,34 @@ EnergyRune_H7ioc.txt
 Drivers/
 
 # Misc
-main.txt
 build_output.txt
 project_structure.txt
 f4/
 .opencode
+
+# Local development/build output; project source and vendor licenses remain tracked.
+.idea/
+.vscode/
+.continue/
+.opencode/
+.planning/
+__pycache__/
+build/
+cmake-build*/
+Objects/
+OBJ/
+Listings/
+*.o
+*.obj
+*.axf
+*.elf
+*.map
+*.lst
+*.crf
+*.d
+*.dep
+*.log
+*.uvguix.*
+*.und
+*.udb
+项目整理/
