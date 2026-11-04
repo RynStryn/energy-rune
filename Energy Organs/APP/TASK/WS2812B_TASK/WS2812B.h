@@ -72,6 +72,7 @@ typedef enum
 ////数据位
 //#define WS2812_SET        (75)  //1//可能灯不一样
 //#define WS2812_RSET       (25)  //0
+
 #define TIMING_ONE  8
 #define TIMING_ZERO 3
 

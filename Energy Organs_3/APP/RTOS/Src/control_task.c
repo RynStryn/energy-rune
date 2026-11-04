@@ -8,7 +8,7 @@ int last_led_time2 = 5 ;
 uint8_t flag_R=0;
 int turn_flag = 0;
 int energe_mode = 0;
-double turn_a=1.045, turn_w=2, turn_b=1.045;
+double turn_a=1.055, turn_w=2.4, turn_b=1.035;
 double angle = 0;
 long long time_Big_energe=0;
 long long time_Small_energe=0;
@@ -23,11 +23,11 @@ bool state=1;
 void rand_big_energe(void)
 {
 
-//	turn_a = rand()%265/1000.0+0.78;
-	turn_a=0.9;
+	turn_a = rand()%265/1000.0+0.78;
+//	turn_a=0.9;
 	turn_b = 2.09-turn_a;
-//	turn_w = rand()%116/1000.0+1.884;
-	turn_w =1.921;
+	turn_w = rand()%116/1000.0+1.884;
+//	turn_w =1.921;
 }
 
 void control_task(void)

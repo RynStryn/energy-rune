@@ -14,6 +14,7 @@
 // 6.28 1的PA2进行对外接f1的当前扇叶告知
 
 // ========== 全局变量定义 (Master) ==========
+#define dsplT 1000
 int game_stage = 0;           // 当前激活进度 (0-5)
 int bonus_window_timer = 0;   // 1秒连击窗口计时器
 uint8_t flag_first_hit = 0;   // 标记：本轮是否已首击
@@ -189,7 +190,7 @@ void control_task(void) {
       // 保持5秒展示 (假设 control_task 每 1ms 被调用一次)
       reset_time_cnt++;
 
-      if (reset_time_cnt > 5000) {
+      if (reset_time_cnt > dsplT) {
         game_stage = 0;
         reset_time_cnt = 0;
         flag_first_hit = 0;
