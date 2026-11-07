@@ -10,9 +10,7 @@
 
 ## 来源
 
-继承 25 赛季 F4 能量机关方案；包含多板固件和早期 H7 尝试。个人与团队分工待补充。
-
-个人职责待补充。保留原工程中的来源说明和许可证；本次归档没有进行构建、烧录或实机验收。
+继承 25 赛季 F4 能量机关方案；包括更新、维护、重组、重写架构与H7方案迁移
 
 ## 代码与历史分支
 
@@ -25,7 +23,8 @@
 | [`archive/f4-led-library`](https://github.com/RynStryn/energy-rune/tree/archive/f4-led-library) | F4 整合 LED 库 |
 | [`archive/h7-can-motor`](https://github.com/RynStryn/energy-rune/tree/archive/h7-can-motor) | 早期 H7 CAN／电机实现 |
 | [`components/hexrec`](https://github.com/RynStryn/energy-rune/tree/components/hexrec) | F103 靶面接收板 |
-
+### 欢迎来玩
+https://energy-rune-game.pages.dev/
 ## 时间口径
 
 历史研发／修改日期写在时间线中。本次于 2026-11-04 整理并提交现存源码；新快照提交使用实际提交日期。
